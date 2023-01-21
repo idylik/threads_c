@@ -76,7 +76,6 @@ bool processor_init(int id, processor *p) {
     p->work_t = 0;
     p->real_t = 0;
     p->wait_t = time(NULL);
-    //printf(".........p->wait_t INIT: %ld\n", p->wait_t);
 
     if (pthread_mutex_init(&(p->lock), NULL) != 0) return false;
 
@@ -101,7 +100,6 @@ void processor_destroy(processor *p) {
 
 void *processor_run(void *v_self) {
     processor *p = (processor*) v_self;
-    //printf("processor RUN id: %i\n", p->id);
     blocking_q *q = p->tasks;
     char type = 0;
 
@@ -112,7 +110,6 @@ void *processor_run(void *v_self) {
 
             type = t->type;
             t->start = t->end = 0;
-            //printf("processeur %i vient de q_get tache %c\n",p->id,type);
 
             switch (t->type) {
                 case 'A':
@@ -168,7 +165,6 @@ void *processor_run(void *v_self) {
                     break;
 
                 case POISON_PILL:
-                    //printf("processor_run %i: task POISON PILL\n", p->id);
                     type = POISON_PILL;
                     long tempsArret = time(NULL);
                     pthread_mutex_lock(&(p->lock));
@@ -178,7 +174,6 @@ void *processor_run(void *v_self) {
             }
 
             //Libérer lock processeur
-            //pthread_mutex_unlock(&(p->lock));
     }
 
 
@@ -222,14 +217,11 @@ void *scheduler(void *v_sched_data) {
                         task_time = TASK_D_T;
                         break;
                 }
-                //printf("TYPE: %c, TASK TIME: %ld\n",t->type,task_time);
-
 
                 int processor_selected = 999;
                 long scheduled_plus_task = 0;
 
                 for (int i = 0; i < PROCESSOR_COUNT; i++) {
-                    //printf("_____mutex %i BARREE\n",i);
                     pthread_mutex_lock(&(data->processors[i].lock));
                     //Donner la tâche au processeur qui aura travaillé le moins longtemps suite à l'affectation:
                     if (data->processors[i].sched_t+task_time < scheduled_plus_task || processor_selected == 999) {
@@ -237,14 +229,9 @@ void *scheduler(void *v_sched_data) {
                         scheduled_plus_task = data->processors[processor_selected].sched_t+task_time;
 
                     }
-                    //printf("processor %i: scheduled_plus_task: %ld\n", i, data->processors[i].sched_t+task_time);
-                    //printf("....mutex %i DEBARREE\n",i);
-                    //pthread_mutex_unlock(&(data->processors[i].lock));
                 }
 
                 //Donner la tâche au processeur choisi:
-                //printf("ORDONNANCEMENT: Tache %c (%ld) attribuée au processeur %i\n", t->type, task_time, processor_selected);
-                //count++;
                 blocking_q_put(p[processor_selected].tasks, t);
 
                 //Débloquer les mutex
